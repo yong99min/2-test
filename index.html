@@ -67,12 +67,11 @@ textarea:focus { outline:none; border-color: var(--primary-blue); }
   <div class="panel active" id="panel-range">
     <div class="panel-title">장을 고르고 절 범위를 선택하면 그 구간 전체로 연습합니다</div>
     <div class="select-row">
-      <select id="range-chapter" onchange="onRangeChapterChange()"></select>
-      <select id="range-start"></select>
+      <select id="range-chapter" onchange="onRangeChapterChange(); startRangePractice();"></select>
+      <select id="range-start" onchange="startRangePractice()"></select>
       <span style="align-self:center;color:var(--text-sub);">~</span>
-      <select id="range-end"></select>
+      <select id="range-end" onchange="startRangePractice()"></select>
     </div>
-    <button class="btn primary" onclick="startRangePractice()">이 구간으로 연습 시작</button>
   </div>
 
   <!-- 기능2: 그룹 -->
@@ -86,7 +85,6 @@ textarea:focus { outline:none; border-color: var(--primary-blue); }
       <button class="btn small" onclick="addToGroup()">+ 그룹에 추가</button>
     </div>
     <div class="group-list" id="group-list"></div>
-    <button class="btn primary" onclick="startGroupPractice()">그룹으로 연습 시작</button>
     <button class="btn small" onclick="clearGroup()">그룹 비우기</button>
   </div>
 
@@ -189,6 +187,9 @@ function addToGroup() {
   if (start > end) { alert('\uc2dc\uc791 \uc808\uc774 \ub05d \uc808\ubcf4\ub2e4 \ud07c\uc218 \uc5c6\uc5b4\uc694'); return; }
   groupItems.push({ chapter: ch, start, end });
   renderGroupList();
+  quizData = groupItems.map(item => buildRangeItem(item.chapter, item.start, item.end));
+  currentIndex = quizData.length - 1;
+  updateView();
 }
 
 function renderGroupList() {
@@ -210,13 +211,6 @@ function renderGroupList() {
 function clearGroup() {
   groupItems = [];
   renderGroupList();
-}
-
-function startGroupPractice() {
-  if (groupItems.length === 0) { alert('\uba3c\uc800 \uadf8\ub8f9\uc5d0 \uad6c\uac04\uc744 \ucd94\uac00\ud574\uc8fc\uc138\uc694'); return; }
-  quizData = groupItems.map(item => buildRangeItem(item.chapter, item.start, item.end));
-  currentIndex = 0;
-  updateView();
 }
 
 function cleanText(text) {
