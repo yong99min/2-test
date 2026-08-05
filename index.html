@@ -23,18 +23,20 @@ body { background-color: var(--bg-color); color: var(--text-main); display:flex;
 h1 { font-size:26px; font-weight:700; margin-bottom:4px; }
 .counter { font-size:14px; color: var(--text-sub); margin-bottom:16px; }
 .tabs { display:flex; gap:6px; margin-bottom:18px; flex-wrap:wrap; }
-.tab-btn { flex:1; min-width:100px; padding:10px; border-radius:12px; border:1px solid var(--btn-border); background:var(--btn-bg); color:var(--text-sub); font-size:14px; font-weight:600; cursor:pointer; text-align:center; }
+.tab-btn { flex:1; min-width:90px; padding:10px 6px; border-radius:12px; border:1px solid var(--btn-border); background:var(--btn-bg); color:var(--text-sub); font-size:13px; font-weight:600; cursor:pointer; text-align:center; }
 .tab-btn.active { background: var(--primary-light); color: var(--primary-blue); border-color: var(--primary-light); }
 .panel { display:none; background:#f8fafc; border:1px solid var(--btn-border); border-radius:16px; padding:18px; margin-bottom:16px; }
 .panel.active { display:block; }
-.panel-title { font-size:15px; font-weight:700; margin-bottom:12px; }
-.select-row { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px; }
+.panel-title { font-size:15px; font-weight:700; margin-bottom:12px; white-space:pre-line; }
+.panel-sub { font-size:13px; color:var(--text-sub); margin-bottom:10px; }
+.select-row { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:10px; }
 select { appearance:none; background-color:#fff; border:1px solid var(--btn-border); color:var(--text-main); padding:10px 30px 10px 14px; border-radius:10px; font-size:14px; font-weight:500; cursor:pointer; outline:none; background-image:url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e"); background-repeat:no-repeat; background-position:right 10px center; background-size:14px; }
 .btn { border:1px solid var(--btn-border); background-color: var(--btn-bg); color: var(--text-sub); padding:10px 18px; border-radius:50px; font-size:14px; font-weight:600; cursor:pointer; transition:all .2s; }
 .btn:hover { background-color:#e5e7eb; }
 .btn.primary { background: var(--primary-blue); color:#fff; border-color: var(--primary-blue); }
 .btn.primary:hover { opacity:.9; }
 .btn.small { padding:6px 12px; font-size:12px; }
+.btn.wide { flex:1; }
 .group-list { display:flex; flex-wrap:wrap; gap:8px; margin:10px 0; }
 .group-chip { background:#fff; border:1px solid var(--btn-border); border-radius:20px; padding:6px 10px 6px 14px; font-size:13px; display:flex; align-items:center; gap:6px; }
 .group-chip button { border:none; background:#fee2e2; color:#b91c1c; width:18px; height:18px; border-radius:50%; font-size:11px; cursor:pointer; line-height:1; }
@@ -59,36 +61,48 @@ textarea:focus { outline:none; border-color: var(--primary-blue); }
   <div class="counter" id="counter-text">구절을 선택해서 연습을 시작하세요</div>
 
   <div class="tabs">
-    <div class="tab-btn active" data-tab="range" onclick="switchTab('range')">장·절 선택 연습</div>
-    <div class="tab-btn" data-tab="group" onclick="switchTab('group')">여러 구간 묶어 연습</div>
+    <div class="tab-btn active" data-tab="range" onclick="switchTab('range')">이어서 연습</div>
+    <div class="tab-btn" data-tab="group" onclick="switchTab('group')">구간 묶어 연습</div>
+    <div class="tab-btn" data-tab="fixed" onclick="switchTab('fixed')">9월 암송세트</div>
   </div>
 
-  <!-- 기능1: 장절 선택 -->
+  <!-- 탭1: 이어서 연습 (책 전체를 절 단위로 이어서) -->
   <div class="panel active" id="panel-range">
-    <div class="panel-title">장을 고르고 절 범위를 선택하면 그 구간 전체로 연습합니다</div>
+    <div class="panel-sub">원하는 장·절로 바로 이동할 수 있어요</div>
     <div class="select-row">
-      <select id="range-chapter" onchange="onRangeChapterChange(); startRangePractice();"></select>
-      <select id="range-start" onchange="startRangePractice()"></select>
-      <span style="align-self:center;color:var(--text-sub);">~</span>
-      <select id="range-end" onchange="startRangePractice()"></select>
+      <select id="range-chapter" onchange="onRangeChapterJump()"></select>
+      <select id="range-verse" onchange="onRangeVerseJump()"></select>
     </div>
   </div>
 
-  <!-- 기능2: 그룹 -->
+  <!-- 탭2: 여러 구간 묶어서 연습 -->
   <div class="panel" id="panel-group">
-    <div class="panel-title">여러 구간을 묶어서 순서대로 연습합니다</div>
+    <div class="panel-sub">여러 구간을 추가하면 순서대로 이어서 연습할 수 있어요</div>
     <div class="select-row">
       <select id="group-chapter" onchange="onGroupChapterChange()"></select>
       <select id="group-start"></select>
       <span style="align-self:center;color:var(--text-sub);">~</span>
       <select id="group-end"></select>
-      <button class="btn small" onclick="addToGroup()">+ 그룹에 추가</button>
+      <button class="btn small" onclick="addToGroup()">추가</button>
     </div>
     <div class="group-list" id="group-list"></div>
     <button class="btn small" onclick="clearGroup()">그룹 비우기</button>
   </div>
 
+  <!-- 탭3: 9월 고정 암송세트 -->
+  <div class="panel" id="panel-fixed">
+    <div class="panel-title">📘◇ 9월 분기별 사명자 실력점검 성구 암송(5개) ◇</div>
+    <div class="panel-sub">이 탭을 열면 아래 5개 세트가 자동으로 준비돼요 (계 3장 12-13절 · 12장 10-11절 · 15장 4-5절 · 18장 7-8절 · 22장 15-16절)</div>
+  </div>
+
   <div id="current-label"></div>
+  <div class="select-row">
+    <select id="jump-select" onchange="jumpTo(this.value)" style="flex:1;"></select>
+  </div>
+  <div class="select-row">
+    <button class="btn wide" onclick="goPrev()">← 이전</button>
+    <button class="btn wide" onclick="goNext()">다음 →</button>
+  </div>
 
   <div class="button-group">
     <button class="btn" id="btn-hint" onclick="toggleHint()">힌트 보기</button>
@@ -104,6 +118,7 @@ textarea:focus { outline:none; border-color: var(--primary-blue); }
   <div class="input-area">
     <textarea id="user-input" placeholder="외운 구절을 입력한 뒤 엔터를 치세요 (정답 시 확인 후 다음 문제로, 오답 시 정답 확인 후 재도전)"></textarea>
   </div>
+  <button class="btn primary" style="width:100%; margin-bottom:10px;" onclick="handleSubmit()">확인 (엔터 안 먹히면 여기 누르세요)</button>
 </div>
 
 <script>
@@ -113,7 +128,18 @@ let quizData = [];
 let currentIndex = 0;
 let isIncorrectWaiting = false;
 let isCorrectWaiting = false;
-let groupItems = []; // {chapter, start, end}
+let groupItems = [];
+let currentMode = 'range'; // 'range' | 'group' | 'fixed'
+let rangeChapter = 1;
+let rangeVerse = 1;
+
+const FIXED_SET = [
+  { chapter: 3, start: 12, end: 13 },
+  { chapter: 12, start: 10, end: 11 },
+  { chapter: 15, start: 4, end: 5 },
+  { chapter: 18, start: 7, end: 8 },
+  { chapter: 22, start: 15, end: 16 }
+];
 
 function chapterVerseCount(ch) {
   return Object.keys(REVELATION[ch]).length;
@@ -140,13 +166,113 @@ function populateVerseSelect(sel, maxV, defaultV) {
   sel.value = defaultV;
 }
 
-function onRangeChapterChange() {
-  const ch = document.getElementById('range-chapter').value;
-  const maxV = chapterVerseCount(ch);
-  populateVerseSelect(document.getElementById('range-start'), maxV, 1);
-  populateVerseSelect(document.getElementById('range-end'), maxV, maxV);
+function switchTab(tab) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+  document.getElementById('panel-range').classList.toggle('active', tab === 'range');
+  document.getElementById('panel-group').classList.toggle('active', tab === 'group');
+  document.getElementById('panel-fixed').classList.toggle('active', tab === 'fixed');
+  if (tab === 'range') {
+    currentMode = 'range';
+    loadRangeVerse();
+  } else if (tab === 'fixed') {
+    loadFixedSet();
+  }
 }
 
+// ---------- 탭1: 이어서 연습 ----------
+function onRangeChapterJump() {
+  const ch = parseInt(document.getElementById('range-chapter').value);
+  const maxV = chapterVerseCount(ch);
+  populateVerseSelect(document.getElementById('range-verse'), maxV, 1);
+  rangeChapter = ch;
+  rangeVerse = 1;
+  loadRangeVerse();
+}
+
+function onRangeVerseJump() {
+  rangeVerse = parseInt(document.getElementById('range-verse').value);
+  loadRangeVerse();
+}
+
+function syncRangeSelects() {
+  const chSel = document.getElementById('range-chapter');
+  if (parseInt(chSel.value) !== rangeChapter) {
+    chSel.value = rangeChapter;
+    populateVerseSelect(document.getElementById('range-verse'), chapterVerseCount(rangeChapter), rangeVerse);
+  } else {
+    document.getElementById('range-verse').value = rangeVerse;
+  }
+}
+
+function loadRangeVerse() {
+  currentMode = 'range';
+  syncRangeSelects();
+  const text = REVELATION[rangeChapter][rangeVerse];
+  quizData = [{
+    rangeLabel: '계 ' + rangeChapter + '장',
+    verse: rangeVerse,
+    posInRange: rangeVerse,
+    totalInRange: chapterVerseCount(rangeChapter),
+    verses: [rangeVerse + '절 ' + text]
+  }];
+  currentIndex = 0;
+  updateView();
+}
+
+function advancePos(ch, v) {
+  const maxV = chapterVerseCount(ch);
+  if (v < maxV) return { chapter: ch, verse: v + 1 };
+  if (ch < 22) return { chapter: ch + 1, verse: 1 };
+  return null;
+}
+
+function retreatPos(ch, v) {
+  if (v > 1) return { chapter: ch, verse: v - 1 };
+  if (ch > 1) { const pc = ch - 1; return { chapter: pc, verse: chapterVerseCount(pc) }; }
+  return null;
+}
+
+function rangeNext() {
+  const nxt = advancePos(rangeChapter, rangeVerse);
+  if (!nxt) { rangeChapter = 1; rangeVerse = 1; } else { rangeChapter = nxt.chapter; rangeVerse = nxt.verse; }
+  loadRangeVerse();
+}
+
+function rangePrev() {
+  const prv = retreatPos(rangeChapter, rangeVerse);
+  if (prv) { rangeChapter = prv.chapter; rangeVerse = prv.verse; }
+  loadRangeVerse();
+}
+
+function findAheadMatch(userCmp, startCh, startV, maxLookahead) {
+  let ch = startCh, v = startV;
+  for (let i = 0; i < maxLookahead; i++) {
+    const nxt = advancePos(ch, v);
+    if (!nxt) return null;
+    ch = nxt.chapter; v = nxt.verse;
+    const t = REVELATION[ch][v];
+    if (!t) continue;
+    const cmp = cleanText(v + '절 ' + t);
+    if (userCmp === cmp) return { chapter: ch, verse: v };
+  }
+  return null;
+}
+
+function goNext() {
+  if (currentMode === 'range') { rangeNext(); return; }
+  if (quizData.length === 0) return;
+  currentIndex = (currentIndex + 1) % quizData.length;
+  updateView();
+}
+
+function goPrev() {
+  if (currentMode === 'range') { rangePrev(); return; }
+  if (quizData.length === 0) return;
+  currentIndex = (currentIndex - 1 + quizData.length) % quizData.length;
+  updateView();
+}
+
+// ---------- 탭2: 여러 구간 묶어 연습 ----------
 function onGroupChapterChange() {
   const ch = document.getElementById('group-chapter').value;
   const maxV = chapterVerseCount(ch);
@@ -154,16 +280,10 @@ function onGroupChapterChange() {
   populateVerseSelect(document.getElementById('group-end'), maxV, maxV);
 }
 
-function switchTab(tab) {
-  document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
-  document.getElementById('panel-range').classList.toggle('active', tab === 'range');
-  document.getElementById('panel-group').classList.toggle('active', tab === 'group');
-}
-
 function buildRangeItems(chapter, start, end) {
   const chData = REVELATION[chapter];
   start = parseInt(start); end = parseInt(end);
-  const rangeLabel = (start === end) ? ('\uacc4 ' + chapter + '\uc7a5 ' + start + '\uc808') : ('\uacc4 ' + chapter + '\uc7a5 ' + start + '-' + end + '\uc808');
+  const rangeLabel = (start === end) ? ('계 ' + chapter + '장 ' + start + '절') : ('계 ' + chapter + '장 ' + start + '-' + end + '절');
   let total = 0;
   for (let v = start; v <= end; v++) { if (chData[v]) total++; }
   const items = [];
@@ -171,26 +291,17 @@ function buildRangeItems(chapter, start, end) {
   for (let v = start; v <= end; v++) {
     if (!chData[v]) continue;
     pos++;
-    items.push({ rangeLabel, verse: v, posInRange: pos, totalInRange: total, verses: [v + '\uc808 ' + chData[v]] });
+    items.push({ rangeLabel, verse: v, posInRange: pos, totalInRange: total, verses: [v + '절 ' + chData[v]] });
   }
   return items;
-}
-
-function startRangePractice() {
-  const ch = document.getElementById('range-chapter').value;
-  const start = document.getElementById('range-start').value;
-  const end = document.getElementById('range-end').value;
-  if (parseInt(start) > parseInt(end)) { alert('\uc2dc\uc791 \uc808\uc774 \ub05d \uc808\ubcf4\ub2e4 \ud07c\uc218 \uc5c6\uc5b4\uc694'); return; }
-  quizData = buildRangeItems(ch, start, end);
-  currentIndex = 0;
-  updateView();
 }
 
 function addToGroup() {
   const ch = parseInt(document.getElementById('group-chapter').value);
   const start = parseInt(document.getElementById('group-start').value);
   const end = parseInt(document.getElementById('group-end').value);
-  if (start > end) { alert('\uc2dc\uc791 \uc808\uc774 \ub05d \uc808\ubcf4\ub2e4 \ud07c\uc218 \uc5c6\uc5b4\uc694'); return; }
+  if (start > end) { alert('시작 절이 끝 절보다 큼수 없어요'); return; }
+  currentMode = 'group';
   groupItems.push({ chapter: ch, start, end });
   renderGroupList();
   let newStartIndex = 0;
@@ -210,10 +321,10 @@ function renderGroupList() {
   groupItems.forEach((item, idx) => {
     const chip = document.createElement('div');
     chip.className = 'group-chip';
-    const label = (item.start === item.end) ? (item.chapter + '\uc7a5 ' + item.start + '\uc808') : (item.chapter + '\uc7a5 ' + item.start + '-' + item.end + '\uc808');
+    const label = (item.start === item.end) ? (item.chapter + '장 ' + item.start + '절') : (item.chapter + '장 ' + item.start + '-' + item.end + '절');
     chip.innerHTML = '<span>' + label + '</span>';
     const btn = document.createElement('button');
-    btn.textContent = '\u00d7';
+    btn.textContent = '×';
     btn.onclick = () => { groupItems.splice(idx, 1); renderGroupList(); };
     chip.appendChild(btn);
     wrap.appendChild(chip);
@@ -223,10 +334,23 @@ function renderGroupList() {
 function clearGroup() {
   groupItems = [];
   renderGroupList();
+  if (currentMode === 'group') { quizData = []; document.getElementById('current-label').innerText = ''; document.getElementById('counter-text').innerText = '구간을 추가해주세요'; renderJumpSelect(); }
 }
 
+// ---------- 탭3: 9월 고정 세트 ----------
+function loadFixedSet() {
+  currentMode = 'fixed';
+  quizData = [];
+  FIXED_SET.forEach(it => {
+    quizData = quizData.concat(buildRangeItems(it.chapter, it.start, it.end));
+  });
+  currentIndex = 0;
+  updateView();
+}
+
+// ---------- 공통 채점 로직 ----------
 function cleanText(text) {
-  let cleaned = text.replace(/\d+\uc808/g, '');
+  let cleaned = text.replace(/\d+절/g, '');
   if (document.getElementById('ignore-space').checked) {
     cleaned = cleaned.replace(/\s+/g, '');
   } else {
@@ -237,12 +361,44 @@ function cleanText(text) {
 
 function getFullText(item) { return item.verses.join(' '); }
 
+function jumpTo(idx) {
+  currentIndex = parseInt(idx);
+  updateView();
+}
+
+function renderJumpSelect() {
+  const sel = document.getElementById('jump-select');
+  if (currentMode === 'range' || quizData.length === 0) {
+    sel.style.display = 'none';
+    sel.innerHTML = '';
+    return;
+  }
+  sel.style.display = '';
+  const prevValue = sel.value;
+  sel.innerHTML = '';
+  quizData.forEach((item, idx) => {
+    const opt = document.createElement('option');
+    opt.value = idx;
+    opt.textContent = item.rangeLabel + ' ' + item.verse + '\uc808';
+    sel.appendChild(opt);
+  });
+  sel.value = currentIndex;
+}
+
 function updateView() {
+  renderJumpSelect();
   if (quizData.length === 0) return;
-  document.getElementById('current-label').innerText = quizData[currentIndex].rangeLabel + ' \u00b7 ' + quizData[currentIndex].verse + '\uc808 (' + quizData[currentIndex].posInRange + '/' + quizData[currentIndex].totalInRange + ')';
-  document.getElementById('counter-text').innerText = (currentIndex + 1) + ' / ' + quizData.length + ' \uad6c\uc808';
+  const item = quizData[currentIndex];
+  if (currentMode === 'range') {
+    document.getElementById('current-label').innerText = item.rangeLabel + ' · ' + item.verse + '절';
+    document.getElementById('counter-text').innerText = '이어서 연습 하는 중';
+  } else {
+    document.getElementById('current-label').innerText = item.rangeLabel + (item.totalInRange > 1 ? (' · ' + item.verse + '절 (' + item.posInRange + '/' + item.totalInRange + ')') : '');
+    document.getElementById('counter-text').innerText = (currentIndex + 1) + ' / ' + quizData.length + ' 구간';
+  }
   document.getElementById('user-input').value = '';
   document.getElementById('result-box').style.display = 'none';
+  document.getElementById('info-box').style.display = 'none';
   document.getElementById('btn-hint').classList.remove('active');
   document.getElementById('btn-target').classList.remove('active');
   isIncorrectWaiting = false;
@@ -251,8 +407,12 @@ function updateView() {
 }
 
 function moveToNextVerse() {
+  if (currentMode === 'range') {
+    rangeNext();
+    return;
+  }
   if (currentIndex + 1 >= quizData.length) {
-    document.getElementById('counter-text').innerText = '\ud574\ub2f9 \uc138\ud2b8 \uc644\ub8cc! \ub2e4\uc2dc \uc2dc\uc791\ud558\ub824\uba74 \uc0c8 \uad6c\uac04\uc744 \uc120\ud0dd\ud558\uc138\uc694';
+    document.getElementById('counter-text').innerText = '해당 세트 완료! 다시 시작하려면 새 구간을 선택하세요';
     currentIndex = 0;
     document.getElementById('user-input').value = '';
     document.getElementById('result-box').style.display = 'none';
@@ -273,7 +433,7 @@ function toggleHint() {
     btnHint.classList.remove('active');
   } else {
     const fullText = cleanText(getFullText(quizData[currentIndex]));
-    infoBox.innerHTML = '<strong>[\ud78c\ud2b8] \uccab \uae00\uc790 \ubaa8\uc74c:</strong> ' + fullText.substring(0, 18) + '...';
+    infoBox.innerHTML = '<strong>[힌트] 첫 글자 모음:</strong> ' + fullText.substring(0, 18) + '...';
     infoBox.style.display = 'block';
     btnHint.classList.add('active');
     btnTarget.classList.remove('active');
@@ -290,8 +450,8 @@ function toggleTargetView() {
     btnTarget.classList.remove('active');
   } else {
     const current = quizData[currentIndex];
-    let html = '<strong>[\uc131\uacbd\uad6c\uc808 \uc6d0\ubb38 \ubcf4\uae30 - ' + current.rangeLabel + ' ' + current.verse + '\uc808]</strong><br>';
-    current.verses.forEach(v => { html += '<div style="margin-top:4px;">\u2022 ' + v + '</div>'; });
+    let html = '<strong>[성경구절 원문 보기 - ' + current.rangeLabel + ' ' + current.verse + '절]</strong><br>';
+    current.verses.forEach(v => { html += '<div style="margin-top:4px;">• ' + v + '</div>'; });
     infoBox.innerHTML = html;
     infoBox.style.display = 'block';
     btnTarget.classList.add('active');
@@ -308,7 +468,7 @@ function escapeHtml(ch) {
 
 function buildDiffHtml(userInput, targetText) {
   const ignoreSpace = document.getElementById('ignore-space').checked;
-  let rawTarget = targetText.replace(/\d+\uc808/g, '').trim();
+  let rawTarget = targetText.replace(/\d+절/g, '').trim();
   const targetCompare = ignoreSpace ? rawTarget.replace(/\s+/g, '') : rawTarget.replace(/\s+/g, ' ');
   let ti = 0;
   let html = '';
@@ -333,23 +493,35 @@ function processInput() {
   if (userCmp === targetCmp && targetCmp.length > 0) {
     isCorrectWaiting = true;
     resultBox.className = 'correct';
-    resultBox.innerHTML = '<div class="result-title">\u2705 \uc815\ub2f5\uc785\ub2c8\ub2e4! \ub2e4\uc74c \ubb38\uc81c\ub85c \ub118\uc5b4\uac11\ub2c8\ub2e4. (\uc5d4\ud130\ub97c \uce58\uc138\uc694)</div>';
+    resultBox.innerHTML = '<div class="result-title">✅ 정답입니다! 다음 문제로 넘어갑니다. (엔터를 치세요)</div>';
     resultBox.style.display = 'block';
-  } else {
-    isIncorrectWaiting = true;
-    let versesHtml = '';
-    current.verses.forEach(v => { versesHtml += '<div class="verse-line">' + v + '</div>'; });
-    const diffHtml = buildDiffHtml(userInput, targetText);
-    resultBox.className = 'incorrect';
-    resultBox.innerHTML = '<div class="result-title">\u274c \uc624\ub2f5! \uc815\ub2f5 \ud655\uc778 (\uc5d4\ud130\ub97c \uce58\uba74 \ub2e4\uc2dc \uc2dc\ub3c4\ud569\ub2c8\ub2e4):</div><div style="background: rgba(255,255,255,0.6); padding:10px; border-radius:8px; margin-top:5px;">' + versesHtml + '</div><div style="margin-top:10px; font-size:13px; color:#7f1d1d;">\ub0b4 \ub2f5\uc548:</div><div style="background: rgba(255,255,255,0.6); padding:10px; border-radius:8px; margin-top:4px; line-height:1.7; word-break:break-all;">' + diffHtml + '</div>';
-    resultBox.style.display = 'block';
+    return;
   }
+
+  // 태범이: 현재보다 앞서은 구절을 입력했을 때 자동 건너뛰기 (탭1만)
+  if (currentMode === 'range' && userCmp.length > 0) {
+    const ahead = findAheadMatch(userCmp, rangeChapter, rangeVerse, 5);
+    if (ahead) {
+      rangeChapter = ahead.chapter;
+      rangeVerse = ahead.verse;
+      isCorrectWaiting = true;
+      resultBox.className = 'correct';
+      resultBox.innerHTML = '<div class="result-title">✅ ' + ahead.chapter + '장 ' + ahead.verse + '절로 인식되었습니다! 다음 구절로 넘어갑니다. (엔터를 치세요)</div>';
+      resultBox.style.display = 'block';
+      return;
+    }
+  }
+
+  isIncorrectWaiting = true;
+  let versesHtml = '';
+  current.verses.forEach(v => { versesHtml += '<div class="verse-line">' + v + '</div>'; });
+  const diffHtml = buildDiffHtml(userInput, targetText);
+  resultBox.className = 'incorrect';
+  resultBox.innerHTML = '<div class="result-title">❌ 오답! 정답 확인 (엔터를 치면 다시 시도합니다):</div><div style="background: rgba(255,255,255,0.6); padding:10px; border-radius:8px; margin-top:5px;">' + versesHtml + '</div><div style="margin-top:10px; font-size:13px; color:#7f1d1d;">내 답안:</div><div style="background: rgba(255,255,255,0.6); padding:10px; border-radius:8px; margin-top:4px; line-height:1.7; word-break:break-all;">' + diffHtml + '</div>';
+  resultBox.style.display = 'block';
 }
 
-document.getElementById('user-input').addEventListener('input', function(event) {
-  const ta = event.target;
-  if (ta.value.indexOf('\n') === -1) return;
-  ta.value = ta.value.replace(/\n/g, '');
+function handleSubmit() {
   if (quizData.length === 0) return;
   if (isCorrectWaiting) {
     moveToNextVerse();
@@ -360,13 +532,21 @@ document.getElementById('user-input').addEventListener('input', function(event) 
   } else {
     processInput();
   }
+}
+
+document.getElementById('user-input').addEventListener('input', function(event) {
+  const ta = event.target;
+  if (ta.value.indexOf('\n') === -1) return;
+  ta.value = ta.value.replace(/\n/g, '');
+  handleSubmit();
 });
 
 // init
 populateChapterSelect(document.getElementById('range-chapter'));
 populateChapterSelect(document.getElementById('group-chapter'));
-onRangeChapterChange();
+populateVerseSelect(document.getElementById('range-verse'), chapterVerseCount(1), 1);
 onGroupChapterChange();
+loadRangeVerse();
 </script>
 </body>
 </html>
