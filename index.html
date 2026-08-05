@@ -243,7 +243,6 @@ function updateView() {
   document.getElementById('counter-text').innerText = (currentIndex + 1) + ' / ' + quizData.length + ' \uad6c\uc808';
   document.getElementById('user-input').value = '';
   document.getElementById('result-box').style.display = 'none';
-  document.getElementById('info-box').style.display = 'none';
   document.getElementById('btn-hint').classList.remove('active');
   document.getElementById('btn-target').classList.remove('active');
   isIncorrectWaiting = false;
@@ -300,6 +299,29 @@ function toggleTargetView() {
   }
 }
 
+function escapeHtml(ch) {
+  if (ch === '&') return '&amp;';
+  if (ch === '<') return '&lt;';
+  if (ch === '>') return '&gt;';
+  return ch;
+}
+
+function buildDiffHtml(userInput, targetText) {
+  const ignoreSpace = document.getElementById('ignore-space').checked;
+  let rawTarget = targetText.replace(/\d+\uc808/g, '').trim();
+  const targetCompare = ignoreSpace ? rawTarget.replace(/\s+/g, '') : rawTarget.replace(/\s+/g, ' ');
+  let ti = 0;
+  let html = '';
+  for (let i = 0; i < userInput.length; i++) {
+    const ch = userInput[i];
+    if (ignoreSpace && /\s/.test(ch)) { html += escapeHtml(ch); continue; }
+    const isMatch = ti < targetCompare.length && ch === targetCompare[ti];
+    html += '<span style="color:' + (isMatch ? '#059669' : '#dc2626') + '">' + escapeHtml(ch) + '</span>';
+    ti++;
+  }
+  return html;
+}
+
 function processInput() {
   const userInput = document.getElementById('user-input').value;
   const current = quizData[currentIndex];
@@ -317,8 +339,9 @@ function processInput() {
     isIncorrectWaiting = true;
     let versesHtml = '';
     current.verses.forEach(v => { versesHtml += '<div class="verse-line">' + v + '</div>'; });
+    const diffHtml = buildDiffHtml(userInput, targetText);
     resultBox.className = 'incorrect';
-    resultBox.innerHTML = '<div class="result-title">\u274c \uc624\ub2f5! \uc815\ub2f5 \ud655\uc778 (\uc5d4\ud130\ub97c \uce58\uba74 \ub2e4\uc2dc \uc2dc\ub3c4\ud569\ub2c8\ub2e4):</div><div style="background: rgba(255,255,255,0.6); padding:10px; border-radius:8px; margin-top:5px;">' + versesHtml + '</div>';
+    resultBox.innerHTML = '<div class="result-title">\u274c \uc624\ub2f5! \uc815\ub2f5 \ud655\uc778 (\uc5d4\ud130\ub97c \uce58\uba74 \ub2e4\uc2dc \uc2dc\ub3c4\ud569\ub2c8\ub2e4):</div><div style="background: rgba(255,255,255,0.6); padding:10px; border-radius:8px; margin-top:5px;">' + versesHtml + '</div><div style="margin-top:10px; font-size:13px; color:#7f1d1d;">\ub0b4 \ub2f5\uc548:</div><div style="background: rgba(255,255,255,0.6); padding:10px; border-radius:8px; margin-top:4px; line-height:1.7; word-break:break-all;">' + diffHtml + '</div>';
     resultBox.style.display = 'block';
   }
 }
