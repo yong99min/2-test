@@ -160,14 +160,20 @@ function switchTab(tab) {
   document.getElementById('panel-group').classList.toggle('active', tab === 'group');
 }
 
-function buildRangeItem(chapter, start, end) {
+function buildRangeItems(chapter, start, end) {
   const chData = REVELATION[chapter];
-  const verses = [];
-  for (let v = parseInt(start); v <= parseInt(end); v++) {
-    if (chData[v]) verses.push(v + '\uc808 ' + chData[v]);
+  start = parseInt(start); end = parseInt(end);
+  const rangeLabel = (start === end) ? ('\uacc4 ' + chapter + '\uc7a5 ' + start + '\uc808') : ('\uacc4 ' + chapter + '\uc7a5 ' + start + '-' + end + '\uc808');
+  let total = 0;
+  for (let v = start; v <= end; v++) { if (chData[v]) total++; }
+  const items = [];
+  let pos = 0;
+  for (let v = start; v <= end; v++) {
+    if (!chData[v]) continue;
+    pos++;
+    items.push({ rangeLabel, verse: v, posInRange: pos, totalInRange: total, verses: [v + '\uc808 ' + chData[v]] });
   }
-  const title = (start == end) ? ('\uacc4 ' + chapter + '\uc7a5 ' + start + '\uc808') : ('\uacc4 ' + chapter + '\uc7a5 ' + start + '-' + end + '\uc808');
-  return { title, verses };
+  return items;
 }
 
 function startRangePractice() {
@@ -175,7 +181,7 @@ function startRangePractice() {
   const start = document.getElementById('range-start').value;
   const end = document.getElementById('range-end').value;
   if (parseInt(start) > parseInt(end)) { alert('\uc2dc\uc791 \uc808\uc774 \ub05d \uc808\ubcf4\ub2e4 \ud07c\uc218 \uc5c6\uc5b4\uc694'); return; }
-  quizData = [buildRangeItem(ch, start, end)];
+  quizData = buildRangeItems(ch, start, end);
   currentIndex = 0;
   updateView();
 }
@@ -187,8 +193,14 @@ function addToGroup() {
   if (start > end) { alert('\uc2dc\uc791 \uc808\uc774 \ub05d \uc808\ubcf4\ub2e4 \ud07c\uc218 \uc5c6\uc5b4\uc694'); return; }
   groupItems.push({ chapter: ch, start, end });
   renderGroupList();
-  quizData = groupItems.map(item => buildRangeItem(item.chapter, item.start, item.end));
-  currentIndex = quizData.length - 1;
+  let newStartIndex = 0;
+  quizData = [];
+  groupItems.forEach((it, idx) => {
+    const its = buildRangeItems(it.chapter, it.start, it.end);
+    if (idx < groupItems.length - 1) newStartIndex += its.length;
+    quizData = quizData.concat(its);
+  });
+  currentIndex = newStartIndex;
   updateView();
 }
 
@@ -227,7 +239,7 @@ function getFullText(item) { return item.verses.join(' '); }
 
 function updateView() {
   if (quizData.length === 0) return;
-  document.getElementById('current-label').innerText = quizData[currentIndex].title;
+  document.getElementById('current-label').innerText = quizData[currentIndex].rangeLabel + ' \u00b7 ' + quizData[currentIndex].verse + '\uc808 (' + quizData[currentIndex].posInRange + '/' + quizData[currentIndex].totalInRange + ')';
   document.getElementById('counter-text').innerText = (currentIndex + 1) + ' / ' + quizData.length + ' \uad6c\uc808';
   document.getElementById('user-input').value = '';
   document.getElementById('result-box').style.display = 'none';
@@ -279,7 +291,7 @@ function toggleTargetView() {
     btnTarget.classList.remove('active');
   } else {
     const current = quizData[currentIndex];
-    let html = '<strong>[\uc131\uacbd\uad6c\uc808 \uc6d0\ubb38 \ubcf4\uae30 - ' + current.title + ']</strong><br>';
+    let html = '<strong>[\uc131\uacbd\uad6c\uc808 \uc6d0\ubb38 \ubcf4\uae30 - ' + current.rangeLabel + ' ' + current.verse + '\uc808]</strong><br>';
     current.verses.forEach(v => { html += '<div style="margin-top:4px;">\u2022 ' + v + '</div>'; });
     infoBox.innerHTML = html;
     infoBox.style.display = 'block';
