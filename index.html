@@ -466,7 +466,7 @@ function escapeHtml(ch) {
   return ch;
 }
 
-function computeLCSMask(userArr, targetArr) {
+function computeLCSMasks(userArr, targetArr) {
   const m = userArr.length, n = targetArr.length;
   const dp = new Array(m + 1);
   for (let i = 0; i <= m; i++) dp[i] = new Array(n + 1).fill(0);
@@ -476,11 +476,13 @@ function computeLCSMask(userArr, targetArr) {
       else dp[i][j] = Math.max(dp[i - 1][j], dp[i][j - 1]);
     }
   }
-  const matched = new Array(m).fill(false);
+  const userMatched = new Array(m).fill(false);
+  const targetMatched = new Array(n).fill(false);
   let i = m, j = n;
   while (i > 0 && j > 0) {
     if (userArr[i - 1] === targetArr[j - 1]) {
-      matched[i - 1] = true;
+      userMatched[i - 1] = true;
+      targetMatched[j - 1] = true;
       i--; j--;
     } else if (dp[i - 1][j] >= dp[i][j - 1]) {
       i--;
@@ -488,28 +490,28 @@ function computeLCSMask(userArr, targetArr) {
       j--;
     }
   }
-  return matched;
+  return { userMatched, targetMatched };
 }
 
-function buildDiffHtml(userInput, targetText) {
+function buildAnswerDiffHtml(userInput, targetText) {
   const ignoreSpace = document.getElementById('ignore-space').checked;
   let rawTarget = targetText.replace(/\d+절/g, '').trim();
 
   if (ignoreSpace) {
-    const targetCompact = Array.from(rawTarget.replace(/\s+/g, ''));
-    const userOriginal = Array.from(userInput);
-    const userCompactChars = [];
-    const userCompactToOriginalIndex = [];
-    userOriginal.forEach((ch, idx) => {
-      if (!/\s/.test(ch)) { userCompactChars.push(ch); userCompactToOriginalIndex.push(idx); }
+    const targetOriginal = Array.from(rawTarget);
+    const userCompact = Array.from(userInput.replace(/\s+/g, ''));
+    const targetCompactChars = [];
+    const targetCompactToOriginal = [];
+    targetOriginal.forEach((ch, idx) => {
+      if (!/\s/.test(ch)) { targetCompactChars.push(ch); targetCompactToOriginal.push(idx); }
     });
-    const matched = computeLCSMask(userCompactChars, targetCompact);
-    const colorForOriginalIndex = new Array(userOriginal.length).fill(null);
-    userCompactToOriginalIndex.forEach((origIdx, compactIdx) => {
-      colorForOriginalIndex[origIdx] = matched[compactIdx];
+    const { targetMatched } = computeLCSMasks(userCompact, targetCompactChars);
+    const colorForOriginalIndex = new Array(targetOriginal.length).fill(null);
+    targetCompactToOriginal.forEach((origIdx, compactIdx) => {
+      colorForOriginalIndex[origIdx] = targetMatched[compactIdx];
     });
     let html = '';
-    userOriginal.forEach((ch, idx) => {
+    targetOriginal.forEach((ch, idx) => {
       if (/\s/.test(ch)) { html += escapeHtml(ch); return; }
       const isMatch = colorForOriginalIndex[idx];
       html += '<span style="color:' + (isMatch ? '#059669' : '#dc2626') + '">' + escapeHtml(ch) + '</span>';
@@ -519,10 +521,10 @@ function buildDiffHtml(userInput, targetText) {
     const targetNorm = rawTarget.replace(/\s+/g, ' ');
     const targetArr = Array.from(targetNorm);
     const userArr = Array.from(userInput);
-    const matched = computeLCSMask(userArr, targetArr);
+    const { targetMatched } = computeLCSMasks(userArr, targetArr);
     let html = '';
-    userArr.forEach((ch, idx) => {
-      const isMatch = matched[idx];
+    targetArr.forEach((ch, idx) => {
+      const isMatch = targetMatched[idx];
       html += '<span style="color:' + (isMatch ? '#059669' : '#dc2626') + '">' + escapeHtml(ch) + '</span>';
     });
     return html;
@@ -560,11 +562,9 @@ function processInput() {
   }
 
   isIncorrectWaiting = true;
-  let versesHtml = '';
-  current.verses.forEach(v => { versesHtml += '<div class="verse-line">' + v + '</div>'; });
-  const diffHtml = buildDiffHtml(userInput, targetText);
+  const diffHtml = buildAnswerDiffHtml(userInput, targetText);
   resultBox.className = 'incorrect';
-  resultBox.innerHTML = '<div class="result-title">❌ 오답! 정답 확인 (엔터를 치면 다시 시도합니다):</div><div style="background: rgba(255,255,255,0.6); padding:10px; border-radius:8px; margin-top:5px;">' + versesHtml + '</div><div style="margin-top:10px; font-size:13px; color:#7f1d1d;">내 답안:</div><div style="background: rgba(255,255,255,0.6); padding:10px; border-radius:8px; margin-top:4px; line-height:1.7; word-break:break-all;">' + diffHtml + '</div>';
+  resultBox.innerHTML = '<div class="result-title">❌ 오답! 정답 확인 (초록: 맞은 글자 · 빨강: 놓친 글자) — 엔터를 치면 다시 시도합니다:</div><div style="background: rgba(255,255,255,0.6); padding:10px; border-radius:8px; margin-top:5px; line-height:1.7; word-break:break-all;">' + diffHtml + '</div>';
   resultBox.style.display = 'block';
 }
 
