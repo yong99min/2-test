@@ -466,20 +466,67 @@ function escapeHtml(ch) {
   return ch;
 }
 
+function computeLCSMask(userArr, targetArr) {
+  const m = userArr.length, n = targetArr.length;
+  const dp = new Array(m + 1);
+  for (let i = 0; i <= m; i++) dp[i] = new Array(n + 1).fill(0);
+  for (let i = 1; i <= m; i++) {
+    for (let j = 1; j <= n; j++) {
+      if (userArr[i - 1] === targetArr[j - 1]) dp[i][j] = dp[i - 1][j - 1] + 1;
+      else dp[i][j] = Math.max(dp[i - 1][j], dp[i][j - 1]);
+    }
+  }
+  const matched = new Array(m).fill(false);
+  let i = m, j = n;
+  while (i > 0 && j > 0) {
+    if (userArr[i - 1] === targetArr[j - 1]) {
+      matched[i - 1] = true;
+      i--; j--;
+    } else if (dp[i - 1][j] >= dp[i][j - 1]) {
+      i--;
+    } else {
+      j--;
+    }
+  }
+  return matched;
+}
+
 function buildDiffHtml(userInput, targetText) {
   const ignoreSpace = document.getElementById('ignore-space').checked;
   let rawTarget = targetText.replace(/\d+절/g, '').trim();
-  const targetCompare = ignoreSpace ? rawTarget.replace(/\s+/g, '') : rawTarget.replace(/\s+/g, ' ');
-  let ti = 0;
-  let html = '';
-  for (let i = 0; i < userInput.length; i++) {
-    const ch = userInput[i];
-    if (ignoreSpace && /\s/.test(ch)) { html += escapeHtml(ch); continue; }
-    const isMatch = ti < targetCompare.length && ch === targetCompare[ti];
-    html += '<span style="color:' + (isMatch ? '#059669' : '#dc2626') + '">' + escapeHtml(ch) + '</span>';
-    ti++;
+
+  if (ignoreSpace) {
+    const targetCompact = Array.from(rawTarget.replace(/\s+/g, ''));
+    const userOriginal = Array.from(userInput);
+    const userCompactChars = [];
+    const userCompactToOriginalIndex = [];
+    userOriginal.forEach((ch, idx) => {
+      if (!/\s/.test(ch)) { userCompactChars.push(ch); userCompactToOriginalIndex.push(idx); }
+    });
+    const matched = computeLCSMask(userCompactChars, targetCompact);
+    const colorForOriginalIndex = new Array(userOriginal.length).fill(null);
+    userCompactToOriginalIndex.forEach((origIdx, compactIdx) => {
+      colorForOriginalIndex[origIdx] = matched[compactIdx];
+    });
+    let html = '';
+    userOriginal.forEach((ch, idx) => {
+      if (/\s/.test(ch)) { html += escapeHtml(ch); return; }
+      const isMatch = colorForOriginalIndex[idx];
+      html += '<span style="color:' + (isMatch ? '#059669' : '#dc2626') + '">' + escapeHtml(ch) + '</span>';
+    });
+    return html;
+  } else {
+    const targetNorm = rawTarget.replace(/\s+/g, ' ');
+    const targetArr = Array.from(targetNorm);
+    const userArr = Array.from(userInput);
+    const matched = computeLCSMask(userArr, targetArr);
+    let html = '';
+    userArr.forEach((ch, idx) => {
+      const isMatch = matched[idx];
+      html += '<span style="color:' + (isMatch ? '#059669' : '#dc2626') + '">' + escapeHtml(ch) + '</span>';
+    });
+    return html;
   }
-  return html;
 }
 
 function processInput() {
