@@ -62,6 +62,9 @@ button:disabled{opacity:.45;cursor:not-allowed}
 .chip.filled{background:#eef2ff;color:#3730a3;border-color:#c7d2fe}
 .chip.sel{outline:2px solid var(--blue);outline-offset:1px}
 .donebox{margin-top:10px;font-weight:700;color:var(--blue)}
+.summary{margin-top:14px;background:#eef2ff;border:1px solid #c7d2fe;border-radius:12px;padding:14px}
+.sumhead{font-weight:800;color:var(--blue);margin-bottom:4px}
+.ansfill{background:#dcfce7;color:#166534;font-weight:800;border-radius:4px;padding:0 4px}
 .scorebox{white-space:pre-wrap;line-height:1.7}
 @media(max-width:560px){body{padding:8px}.wrap{padding:16px}.tabs{gap:5px}.tab{font-size:12px;padding:10px 4px}.seg button{padding:8px 9px;font-size:12px}}
 </style>
@@ -240,6 +243,7 @@ function mountFields(root,o){
    grade(i);
    if(!state.results[i]){state.review[i]=true;return "review"}
   }
+  if(v2&&o.practice&&state.results[i]&&fields.every((_,k)=>state.results[k]===true)){o.onLast&&o.onLast();return}
   if(!v2||!o.practice){
    if(i<fields.length-1)focus(i+1);
    else o.onLast&&o.onLast();
@@ -320,16 +324,38 @@ function renderQuestion(focus){
  const q=questions[qIndex],st=examState[qIndex];
  $("exam-progress").textContent=curSet!=="bank"?`${q.n} / ${questions.length}번 · ${q.points}점`:`${q.n} / ${questions.length}번 · ${q.sec}`;
  renderNav();
- $("exam-question").innerHTML=`<div class="card"><div class="qhead">문제 ${q.n} <span class="points">(${curSet!=="bank"?q.points+"점":esc(q.sec)})</span></div><div class="small verse-ref">${esc(q.ref)}</div>${q.kind!=="blank"?`<div class="prompt">${esc(q.prompt)}</div>`:""}<div id="qfields"></div></div>`;
+ $("exam-question").innerHTML=`<div class="card"><div class="qhead">문제 ${q.n} <span class="points">(${curSet!=="bank"?q.points+"점":esc(q.sec)})</span></div><div class="small verse-ref">${esc(q.ref)}</div>${q.kind!=="blank"?`<div class="prompt">${esc(q.prompt)}</div>`:""}<div id="qfields"></div><div id="qsummary"></div></div>`;
+ st.summary=false;
  qApi=mountFields($("qfields"),{
   fields:st.fields,state:st,prompt:q.kind==="blank"?q.prompt:null,
   practice:isPractice(),showFb:()=>isPractice()||revealed,
-  onLast:goNext,onUpdate:()=>{renderNav();updateScore()}
+  onLast:()=>{if(isPractice()&&!st.summary){showSummary();return}goNext()},onUpdate:()=>{renderNav();updateScore()}
  });
  $("prev-q").disabled=qIndex===0;$("next-q").disabled=qIndex===questions.length-1;
  $("check-q").classList.toggle("hidden",!isPractice());
  if(focus)qApi.focus();
 }
+function showSummary(){
+ const q=questions[qIndex],st=examState[qIndex];st.summary=true;
+ const fill=a=>`<span class="ansfill">${esc(a)}</span>`;
+ let body;
+ if(q.kind==="blank")body=esc(q.prompt).replace(/\[([①-⑩])\]/g,(m,c)=>fill(q.answers[CIRC.indexOf(c)]));
+ else if(q.kind==="title")body=`${esc(q.ref)} 제목<br>${fill(q.answer)}`;
+ else body=st.fields.map(f=>`<div style="margin:4px 0"><b class="verse-ref">${esc(f.label)}</b> ${esc(f.answer)}</div>`).join("");
+ const ok=st.fields.every((_,k)=>st.results[k]===true);
+ $("qsummary").innerHTML=`<div class="summary"><div class="sumhead">${ok?"✓ 다 맞았어요":"정답 확인"} · 전체 구절</div><div class="prompt">${body}</div><div class="actions" style="margin-bottom:0"><button type="button" class="primary" id="sum-next">${qIndex<questions.length-1?"다음 문제 →":"결과 보기"} (Enter)</button></div></div>`;
+ $("sum-next").onclick=goNext;
+ $("qsummary").scrollIntoView({behavior:"smooth",block:"nearest"});
+}
+document.addEventListener("keydown",e=>{
+ if(e.key!=="Enter"||e.isComposing)return;
+ const st=examState[qIndex];
+ if(!st||!st.summary||!$("exam").classList.contains("active"))return;
+ const a=document.activeElement;
+ if(a&&a.classList&&a.classList.contains("fin"))return;
+ if(a&&a.id==="sum-next")return;
+ e.preventDefault();goNext();
+});
 function updateScore(){
  const practice=isPractice();
  $("grade-all").classList.toggle("hidden",practice);
